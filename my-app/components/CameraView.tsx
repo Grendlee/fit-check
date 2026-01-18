@@ -81,7 +81,7 @@ export function CameraView({ styleId }: { styleId: string }) {
 
     if (countdownRef.current) window.clearInterval(countdownRef.current);
 
-    setCountdown(5);
+    setCountdown(4);
 
     countdownRef.current = window.setInterval(() => {
       setCountdown((prev) => {
@@ -133,7 +133,7 @@ export function CameraView({ styleId }: { styleId: string }) {
       <motion.div
         initial={{ opacity: 0, y: -18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="absolute top-0 left-0 right-0 z-10"
+        className="relative z-10"
       >
         <div className="mx-auto w-full max-w-6xl px-6 pt-3">
           <div className="rounded-[18px] border-2 border-zinc-900 bg-[#f4eadf] shadow-[3px_3px_0_#00000012]">
@@ -177,7 +177,7 @@ export function CameraView({ styleId }: { styleId: string }) {
       </motion.div>
 
       {/* Camera / Photo (more vertical room) */}
-      <div className="flex-1 relative overflow-hidden pt-[58px]">
+      <div className="flex-1 relative overflow-hidden pt-[10px]">
         {isLoading && !photo && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#eee2d5]">
             <Loader2 className="w-8 h-8 animate-spin text-zinc-700" />
