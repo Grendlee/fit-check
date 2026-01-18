@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -25,8 +24,9 @@ export function AddVibeCard({ index }: AddVibeCardProps) {
 
   const handleSubmit = () => {
     if (vibeName.trim()) {
-      // Navigate with custom vibe name
-      router.push(`/camera/custom-${vibeName.toLowerCase().replace(/\s+/g, "-")}`);
+      router.push(
+        `/camera/custom-${vibeName.toLowerCase().replace(/\s+/g, "-")}`
+      );
       setIsOpen(false);
     }
   };
@@ -35,41 +35,48 @@ export function AddVibeCard({ index }: AddVibeCardProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-          whileHover={{ scale: 1.02, y: -4 }}
-          whileTap={{ scale: 0.98 }}
-          className="relative group cursor-pointer"
+          transition={{ delay: index * 0.04 }}
+          whileHover={{ y: -3 }}
+          whileTap={{ scale: 0.985 }}
+          className="cursor-pointer select-none"
         >
-          <div className="rounded-2xl p-4 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/30 hover:border-primary/50 transition-all">
-            <div className="flex flex-col items-center gap-2 py-2">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                <Plus className="w-6 h-6 text-primary" />
-              </div>
-              <span className="text-sm font-medium text-foreground">
-                Add Vibe
-              </span>
-              <span className="text-xs text-muted-foreground text-center">
-                Create custom
-              </span>
+          <div className="rounded-[22px] border-2 border-dashed border-zinc-900/50 bg-[#f7f1ea] p-4 shadow-[4px_4px_0_#00000012] hover:shadow-[6px_6px_0_#00000014] transition">
+            <div className="flex flex-col gap-2">
+              <h3 className="text-sm font-black tracking-wide uppercase">
+                Add a Vibe
+              </h3>
+              <div className="h-px w-10 bg-zinc-900/30" />
+              <p className="text-xs text-zinc-700 [font-family:ui-serif,Georgia,serif]">
+                Create a custom style target
+              </p>
             </div>
           </div>
         </motion.div>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+
+      <DialogContent className="sm:max-w-md bg-[#f4eadf] border-2 border-zinc-900 shadow-[6px_6px_0_#00000015]">
         <DialogHeader>
-          <DialogTitle className="font-display">Create Your Vibe</DialogTitle>
+          <DialogTitle className="font-black tracking-wide">
+            Create a Vibe
+          </DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4 pt-4">
           <Input
-            placeholder="Enter vibe name (e.g., 'Cozy Winter')"
+            placeholder="e.g. Parisian Minimal"
             value={vibeName}
             onChange={(e) => setVibeName(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            className="border-zinc-900 bg-[#faf7f3]"
           />
-          <Button onClick={handleSubmit} className="w-full" disabled={!vibeName.trim()}>
-            Continue to Camera
+          <Button
+            onClick={handleSubmit}
+            disabled={!vibeName.trim()}
+            className="w-full border-2 border-zinc-900 bg-[#e7dccf] text-zinc-900 hover:bg-[#dfd2c4]"
+          >
+            Continue
           </Button>
         </div>
       </DialogContent>
