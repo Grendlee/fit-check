@@ -408,11 +408,11 @@ export default function SuggestedFitsPage() {
                 {outfits.length > 0 ? (
                   <Carousel
                     opts={{ align: "center", loop: true }}
-                    className="w-full max-w-3xl mx-auto"
+                    className="w-full"
                   >
-                    <CarouselContent className="-ml-2 md:-ml-4">
+                    <CarouselContent className="-ml-4">
                       {outfits.map((o, idx) => (
-                        <CarouselItem key={idx} className="pl-2 md:pl-4 basis-[92%] md:basis-[70%]">
+                        <CarouselItem key={idx} className="pl-4 basis-[80%] sm:basis-[60%] md:basis-[50%] lg:basis-[40%]">
                           <div className="rounded-[26px] border-2 border-zinc-900 bg-[#f4eadf] shadow-[4px_4px_0_#00000012] p-5">
                             <div className="flex items-center justify-between mb-4">
                               <div className="text-lg [font-family:'Bodoni Moda','Didot','Bodoni MT',ui-serif,serif] font-semibold">
