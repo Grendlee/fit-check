@@ -16,9 +16,10 @@ export function CameraView({ styleId }: { styleId: string }) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
+  const [facingMode, setFacingMode] = useState<"user" | "environment">(
+    "environment"
+  );
 
-  // ✅ NEW: countdown timer
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<number | null>(null);
 
@@ -74,12 +75,10 @@ export function CameraView({ styleId }: { styleId: string }) {
     setPhoto(imageData);
   }, []);
 
-  // ✅ NEW: start a 3..2..1 countdown, then auto-capture
   const startCountdownCapture = () => {
     if (isLoading || photo) return;
     if (countdown !== null) return;
 
-    // clear any previous timer
     if (countdownRef.current) window.clearInterval(countdownRef.current);
 
     setCountdown(5);
@@ -92,7 +91,6 @@ export function CameraView({ styleId }: { styleId: string }) {
           window.clearInterval(countdownRef.current!);
           countdownRef.current = null;
 
-          // brief beat so "1" is visible before capturing
           setTimeout(() => {
             setCountdown(null);
             capturePhoto();
@@ -115,62 +113,74 @@ export function CameraView({ styleId }: { styleId: string }) {
   };
 
   const toggleCamera = () => {
-    if (countdown !== null) return; // don't flip mid-countdown
+    if (countdown !== null) return;
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };
 
   const confirmPhoto = () => {
     if (!photo) return;
 
-    // ✅ temp in-tab storage ONLY (not uploaded anywhere)
     sessionStorage.setItem("fitcheck:capture", photo);
-
-    // ✅ go to rating
     router.push(`/rating/${styleId}`);
   };
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex flex-col">
-      {/* Header */}
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#f4eadf] text-zinc-900">
+      {/* subtle paper dots */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.12] bg-[radial-gradient(#000_0.8px,transparent_0)] [background-size:22px_22px]" />
+
+      {/* Header (thinner) */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="absolute top-0 left-0 right-0 z-10 glass-panel"
+        className="absolute top-0 left-0 right-0 z-10"
       >
-        <div className="p-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/")}
-            className="rounded-full"
-            disabled={countdown !== null}
-          >
-            <X className="w-5 h-5" />
-          </Button>
+        <div className="mx-auto w-full max-w-6xl px-6 pt-3">
+          <div className="rounded-[18px] border-2 border-zinc-900 bg-[#f4eadf] shadow-[3px_3px_0_#00000012]">
+            <div className="px-4 py-1.5 flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push("/")}
+                className="h-10 w-10 rounded-full border-2 border-zinc-900 bg-[#f7f1ea] hover:bg-[#eee2d5] text-zinc-900 shadow-[2px_2px_0_#00000012]"
+                disabled={countdown !== null}
+              >
+                <X className="w-5 h-5" />
+              </Button>
 
-          <div className="text-center">
-            <span className="text-2xl">{style?.emoji || "✨"}</span>
-            <h2 className="font-display font-semibold text-sm capitalize">{styleName}</h2>
+              <div className="text-center">
+                <div className="text-[9px] tracking-[0.28em] uppercase text-zinc-700">
+                  Target vibe
+                </div>
+                <h2 className="mt-0.5 text-[15px] font-semibold capitalize tracking-tight [font-family:'Bodoni Moda','Didot','Bodoni MT',ui-serif,serif]">
+                  {styleName}
+                </h2>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleCamera}
+                className="h-10 w-10 rounded-full border-2 border-zinc-900 bg-[#f7f1ea] hover:bg-[#eee2d5] text-zinc-900 shadow-[2px_2px_0_#00000012]"
+                disabled={!!photo || countdown !== null}
+              >
+                <RotateCcw className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Make indicator thinner without touching its logic */}
+            <div className="px-3 pb-1 -mt-1 scale-[0.92] origin-top">
+              <StepIndicator currentStep={2} />
+            </div>
           </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleCamera}
-            className="rounded-full"
-            disabled={!!photo || countdown !== null}
-          >
-            <RotateCcw className="w-5 h-5" />
-          </Button>
         </div>
-        <StepIndicator currentStep={2} />
       </motion.div>
 
-      {/* Camera / Photo */}
-      <div className="flex-1 relative overflow-hidden">
+      {/* Camera / Photo (more vertical room) */}
+      <div className="flex-1 relative overflow-hidden pt-[58px]">
         {isLoading && !photo && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <div className="absolute inset-0 flex items-center justify-center bg-[#eee2d5]">
+            <Loader2 className="w-8 h-8 animate-spin text-zinc-700" />
           </div>
         )}
 
@@ -189,17 +199,26 @@ export function CameraView({ styleId }: { styleId: string }) {
             playsInline
             muted
             onLoadedMetadata={() => setIsLoading(false)}
-            className="w-full h-full object-contain bg-black"
+            className="w-full h-full object-contain bg-zinc-950 border-y-2 border-zinc-900"
           />
         )}
 
         {!photo && (
-          <div className="absolute inset-40 bottom-80 translate-y-40 flex items-center justify-center pointer-events-none">
-            <img src="/s3.png" alt="Align your body" className="scale-1 h-[250%] w-auto object-contain" />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="relative flex flex-col items-center">
+              <div className="mb-2 text-[10px] tracking-[0.28em] uppercase text-white/75">
+                Align your body
+              </div>
+              <img
+                src="/s3.png"
+                alt="Align your body"
+                className="h-[82vh] max-h-[880px] w-auto object-contain opacity-35"
+              />
+            </div>
           </div>
         )}
 
-        {/* ✅ NEW: countdown overlay */}
+        {/* Countdown overlay */}
         <AnimatePresence>
           {countdown !== null && !photo && (
             <motion.div
@@ -208,15 +227,20 @@ export function CameraView({ styleId }: { styleId: string }) {
               exit={{ opacity: 0 }}
               className="absolute inset-0 flex items-center justify-center"
             >
-              <div className="rounded-full bg-black/60 px-10 py-6 border border-white/10">
+              <div className="rounded-full bg-[#f4eadf] px-9 py-5 border-2 border-zinc-900 shadow-[6px_6px_0_#00000018]">
                 <motion.div
                   key={countdown}
                   initial={{ scale: 0.75, opacity: 0 }}
                   animate={{ scale: 1, opacity: 0.95 }}
                   className="text-6xl font-bold text-white text-center"
                 >
-                  {countdown === 0 ? "📸" : countdown}
+                  {countdown === 0 ? "" : countdown}
                 </motion.div>
+                {countdown === 0 && (
+                  <div className="text-[9px] tracking-[0.28em] uppercase text-zinc-700 text-center">
+                    capturing
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -225,36 +249,49 @@ export function CameraView({ styleId }: { styleId: string }) {
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {/* Controls */}
+      {/* Controls (thinner) */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-panel p-6 flex items-center justify-center gap-6"
+        className="px-6 pb-4 pt-2"
       >
-        {photo ? (
-          <>
-            <Button variant="outline" size="lg" onClick={retakePhoto} className="rounded-full px-8">
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Retake
-            </Button>
-            <Button size="lg" onClick={confirmPhoto} className="rounded-full px-8 bg-primary hover:bg-primary/90">
-              <Check className="w-5 h-5 mr-2" />
-              Use Photo
-            </Button>
-          </>
-        ) : (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={startCountdownCapture} // ✅ changed
-            disabled={isLoading || countdown !== null} // ✅ changed
-            className="w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-lg disabled:opacity-50"
-          >
-            <div className="w-16 h-16 rounded-full border-4 border-primary-foreground flex items-center justify-center">
-              <Camera className="w-8 h-8 text-primary-foreground" />
-            </div>
-          </motion.button>
-        )}
+        <div className="mx-auto w-full max-w-6xl rounded-[20px] border-2 border-zinc-900 bg-[#f4eadf] shadow-[4px_4px_0_#00000012] px-4 py-3 flex items-center justify-center gap-3">
+          {photo ? (
+            <>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={retakePhoto}
+                className="h-12 rounded-full px-7 border-2 border-zinc-900 bg-[#f7f1ea] text-zinc-900 hover:bg-[#eee2d5] shadow-[2px_2px_0_#00000012]"
+              >
+                <RotateCcw className="w-5 h-5 mr-2" />
+                Retake
+              </Button>
+
+              <Button
+                size="lg"
+                onClick={confirmPhoto}
+                className="h-12 rounded-full px-7 border-2 border-zinc-900 bg-[#e7dccf] text-zinc-900 hover:bg-[#dfd2c4] shadow-[2px_2px_0_#00000012]"
+              >
+                <Check className="w-5 h-5 mr-2" />
+                Use Photo
+              </Button>
+            </>
+          ) : (
+            <motion.button
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={startCountdownCapture}
+              disabled={isLoading || countdown !== null}
+              className="h-12 px-7 rounded-full border-2 border-zinc-900 bg-[#e7dccf] shadow-[3px_3px_0_#00000014] hover:bg-[#dfd2c4] disabled:opacity-50 disabled:shadow-none disabled:hover:bg-[#e7dccf] transition flex items-center gap-3"
+            >
+              <Camera className="w-5 h-5" />
+              <span className="text-sm font-black tracking-wide uppercase">
+                Capture
+              </span>
+            </motion.button>
+          )}
+        </div>
       </motion.div>
     </div>
   );

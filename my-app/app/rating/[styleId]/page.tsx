@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { styleCategories } from "@/data/styles";
 import { styleRubrics } from "@/data/styleRubrics";
 import { geminiModel } from "@/lib/gemini";
+import { StepIndicator } from "@/components/StepIndicator";
 
 type RatingResult = {
   target_style: string;
@@ -60,7 +61,6 @@ export default function RatingPage() {
   const router = useRouter();
   const params = useParams();
 
-  // ✅ works whether your folder is [styleid] or [styleId]
   const styleId =
     ((params as any)?.styleid as string) ||
     ((params as any)?.styleId as string) ||
@@ -68,7 +68,6 @@ export default function RatingPage() {
 
   const style = useMemo(() => styleCategories.find((s) => s.id === styleId), [styleId]);
 
-  // ✅ tech-bro -> tech_bro to match rubric keys
   const rubricKey = useMemo(() => {
     if (!styleId) return "";
     return styleId.replace(/-/g, "_");
@@ -93,7 +92,6 @@ export default function RatingPage() {
   }, []);
 
   const handleRate = async () => {
-    // reset UI
     setError(null);
     setResult(null);
 
@@ -145,7 +143,8 @@ Hard rules:
 - If the outfit is not fully visible (headshot / cropped / shoes not shown), match_score MUST be between 0 and 20 and include "insufficient outfit visibility" in reasons.
 - match_score: 0-100, confidence: 0-1.
 - Provide 3-6 bullet reasons and 3-6 bullet suggestions.
-- Suggestions must explicitly reference rubric items (e.g., replace X with a rubric signature item).
+- Suggestions must be written for everyday users. Do NOT mention “rubric”, “signature items”, “palette & materials”, or any internal categories.
+- Suggestions should be specific and actionable (what to swap/add), and consistent with the target vibe.
 - Set top_match true only if the TOP clearly matches the rubric.
 - Set bottom_match true only if the BOTTOM clearly matches the rubric.
 - If top or bottom is not visible / unclear, set that part's match to false.
@@ -159,7 +158,6 @@ Now analyze the image and output JSON only.
 
       const json = extractJson(text) as RatingResult;
 
-      // ✅ guards so UI never breaks
       const safe: RatingResult = {
         target_style: styleId,
         detected_style: typeof json?.detected_style === "string" ? json.detected_style : "Unknown",
@@ -171,7 +169,6 @@ Now analyze the image and output JSON only.
         bottom_match: typeof json?.bottom_match === "boolean" ? json.bottom_match : false,
       };
 
-      // ✅ store for suggestions page (tops vs bottoms logic)
       sessionStorage.setItem("fitcheck:rating", JSON.stringify(safe));
 
       setResult(safe);
@@ -222,29 +219,152 @@ Now analyze the image and output JSON only.
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/10 p-4">
-            <div className="font-semibold mb-2">Why</div>
-            <ul className="list-disc pl-5 space-y-1 text-sm">
-              {result.reasons.map((r, i) => (
-                <li key={i}>{r}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-xl border border-white/10 p-4">
-            <div className="font-semibold mb-2">How to match better</div>
-            <ul className="list-disc pl-5 space-y-1 text-sm">
-              {result.suggestions.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </div>
-
-          <Button className="w-full" onClick={() => router.push(`/suggestions/${styleId}`)}>
-            See suggested fits
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/camera/${styleId}`)}
+            className="h-11 rounded-full px-6 border-2 border-zinc-900 bg-[#f7f1ea] text-zinc-900 hover:bg-[#eee2d5] shadow-[2px_2px_0_#00000012]"
+          >
+            Retake
           </Button>
         </div>
-      )}
+        
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left: image */}
+          <div className="lg:col-span-5">
+            <div className="rounded-[22px] border-2 border-zinc-900 bg-[#f4eadf] shadow-[4px_4px_0_#00000012] overflow-hidden">
+              {imageDataUrl ? (
+                <img
+                  src={imageDataUrl}
+                  alt="Captured"
+                  className="w-full aspect-[3/4] object-cover bg-zinc-950"
+                />
+              ) : (
+                <div className="w-full aspect-[3/4] bg-[#eee2d5]" />
+              )}
+              <div className="px-5 py-4 border-t-2 border-zinc-900/15">
+                <div className="text-[10px] tracking-[0.28em] uppercase text-zinc-700">
+                  Photo
+                </div>
+                <div className="mt-1 text-sm text-zinc-800">
+                
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <div className="mt-4 rounded-[18px] border-2 border-zinc-900 bg-[#f7f1ea] shadow-[3px_3px_0_#00000010] px-5 py-4">
+                <div className="text-[10px] tracking-[0.28em] uppercase text-zinc-700">
+                  Error
+                </div>
+                <div className="mt-1 text-sm text-zinc-900">{error}</div>
+              </div>
+            )}
+
+            {!result && (
+              <div className="mt-4">
+                <Button
+                  onClick={handleRate}
+                  disabled={loading || !imageDataUrl}
+                  className="h-12 w-full rounded-full border-2 border-zinc-900 bg-[#e7dccf] text-zinc-900 hover:bg-[#dfd2c4] shadow-[3px_3px_0_#00000014] disabled:opacity-60"
+                >
+                  {loading ? "Rating..." : "Rate my fit"}
+                </Button>
+
+                <div className="mt-3 text-xs text-zinc-700">
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right: results */}
+          <div className="lg:col-span-7 space-y-5">
+            {result && (
+              <>
+                {/* Summary card (no scores shown) */}
+                <div className="rounded-[22px] border-2 border-zinc-900 bg-[#f4eadf] shadow-[4px_4px_0_#00000012] p-5">
+                  <div className="text-[10px] tracking-[0.28em] uppercase text-zinc-700">
+                    Overview
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="rounded-[18px] border-2 border-zinc-900/70 bg-[#f7f1ea] px-4 py-3 shadow-[2px_2px_0_#00000010]">
+                      <div className="text-[10px] tracking-[0.26em] uppercase text-zinc-700">
+                        Detected
+                      </div>
+                      <div className="mt-1 text-sm font-medium text-zinc-900">
+                        {result.detected_style}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border-2 border-zinc-900/70 bg-[#f7f1ea] px-4 py-3 shadow-[2px_2px_0_#00000010]">
+                      <div className="text-[10px] tracking-[0.26em] uppercase text-zinc-700">
+                        Top match
+                      </div>
+                      <div className="mt-1 text-sm font-medium text-zinc-900">
+                        {result.top_match ? "Yes" : "No"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border-2 border-zinc-900/70 bg-[#f7f1ea] px-4 py-3 shadow-[2px_2px_0_#00000010]">
+                      <div className="text-[10px] tracking-[0.26em] uppercase text-zinc-700">
+                        Bottom match
+                      </div>
+                      <div className="mt-1 text-sm font-medium text-zinc-900">
+                        {result.bottom_match ? "Yes" : "No"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Why */}
+                <div className="rounded-[22px] border-2 border-zinc-900 bg-[#f4eadf] shadow-[4px_4px_0_#00000012] p-5">
+                  <div className="text-[10px] tracking-[0.28em] uppercase text-zinc-700">
+                    Notes
+                  </div>
+                  <h2 className="mt-1 text-xl leading-tight tracking-tight [font-family:'Bodoni Moda','Didot','Bodoni MT',ui-serif,serif] font-semibold">
+                    Why it reads that way
+                  </h2>
+
+                  <ul className="mt-3 space-y-2 text-sm text-zinc-900">
+                    {result.reasons.map((r, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span className="mt-2 h-[5px] w-[5px] rounded-full bg-zinc-900/70 shrink-0" />
+                        <span>{r}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* How to match better */}
+                <div className="rounded-[22px] border-2 border-zinc-900 bg-[#f4eadf] shadow-[4px_4px_0_#00000012] p-5">
+                  <div className="text-[10px] tracking-[0.28em] uppercase text-zinc-700">
+                    Adjustments
+                  </div>
+                  <h2 className="mt-1 text-xl leading-tight tracking-tight [font-family:'Bodoni Moda','Didot','Bodoni MT',ui-serif,serif] font-semibold">
+                    How to match better
+                  </h2>
+
+                  <ul className="mt-3 space-y-2 text-sm text-zinc-900">
+                    {result.suggestions.map((s, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span className="mt-2 h-[5px] w-[5px] rounded-full bg-zinc-900/70 shrink-0" />
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Button
+                  onClick={() => router.push(`/suggestions/${styleId}`)}
+                  className="h-12 w-full rounded-full border-2 border-zinc-900 bg-[#e7dccf] text-zinc-900 hover:bg-[#dfd2c4] shadow-[3px_3px_0_#00000014]"
+                >
+                  See suggested fits
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

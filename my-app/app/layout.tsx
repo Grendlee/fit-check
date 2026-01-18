@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Shirt, Sparkles } from "lucide-react";
 import AccountMenu from "@/components/AccountMenu";
 import "./globals.css";
 
@@ -40,9 +41,19 @@ export default function RootLayout({
             <div className="pointer-events-none absolute inset-0 opacity-[0.12] bg-[radial-gradient(#000_0.8px,transparent_0)] [background-size:22px_22px]" />
 
             <div className="relative flex items-center justify-between px-6 py-4">
-              <div className="text-lg font-black tracking-tight [font-family:ui-serif,Georgia,serif]">
-                Fit Check
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-full border-2 border-zinc-900 bg-[#f4eadf] flex items-center justify-center shadow-[2px_2px_0_#00000012]">
+                <Shirt className="h-5 w-5" />
               </div>
+              <div className="leading-tight">
+                <h1 className="text-2xl font-black tracking-tight [font-family:ui-serif,Georgia,serif]">
+                  Fit Check
+                </h1>
+                <p className="text-sm text-zinc-700 [font-family:ui-serif,Georgia,serif]">
+                  Choose a vibe. Match the look.
+                </p>
+              </div>
+            </div>
 
               {/* Shows only when logged in */}
               <AccountMenu />

@@ -22,19 +22,7 @@ export default function Home() {
           className="relative px-6 pt-6 pb-4"
         >
           <div className="mx-auto w-full max-w-6xl">
-            <div className="flex items-center gap-3">
-              <div className="h-11 w-11 rounded-full border-2 border-zinc-900 bg-[#f4eadf] flex items-center justify-center shadow-[2px_2px_0_#00000012]">
-                <Shirt className="h-5 w-5" />
-              </div>
-              <div className="leading-tight">
-                <h1 className="text-2xl font-black tracking-tight [font-family:ui-serif,Georgia,serif]">
-                  Fit Check
-                </h1>
-                <p className="text-sm text-zinc-700 [font-family:ui-serif,Georgia,serif]">
-                  Choose a vibe. Match the look.
-                </p>
-              </div>
-            </div>
+
 
             <div className="mt-5 border-t border-zinc-900/15" />
           </div>
