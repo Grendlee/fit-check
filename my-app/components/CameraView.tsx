@@ -81,7 +81,7 @@ export function CameraView({ styleId }: { styleId: string }) {
 
     if (countdownRef.current) window.clearInterval(countdownRef.current);
 
-    setCountdown(3);
+    setCountdown(5);
 
     countdownRef.current = window.setInterval(() => {
       setCountdown((prev) => {
