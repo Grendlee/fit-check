@@ -10,10 +10,12 @@ import { geminiModel } from "@/lib/gemini";
 type RatingResult = {
   target_style: string;
   detected_style: string;
-  match_score: number; // 0-100
-  confidence: number;  // 0-1
+  match_score: number;
+  confidence: number;
   reasons: string[];
   suggestions: string[];
+  top_match: boolean;
+  bottom_match: boolean;
 };
 
 function extractJson(raw: string) {
@@ -34,18 +36,23 @@ function getGeminiText(resp: any): string {
 }
 
 function rubricToText(rubric: any) {
+  const sig = Array.isArray(rubric?.signature_items) ? rubric.signature_items : [];
+  const avoid = Array.isArray(rubric?.avoid) ? rubric.avoid : [];
+  const pal = Array.isArray(rubric?.palette_materials) ? rubric.palette_materials : [];
+  const sil = Array.isArray(rubric?.silhouette) ? rubric.silhouette : [];
+
   return `
 Signature items:
-- ${rubric.signature_items?.join("\n- ") ?? ""}
+- ${sig.join("\n- ")}
 
 Avoid:
-- ${rubric.avoid?.join("\n- ") ?? ""}
+- ${avoid.join("\n- ")}
 
 Palette & materials:
-- ${rubric.palette_materials?.join("\n- ") ?? ""}
+- ${pal.join("\n- ")}
 
 Silhouette:
-- ${rubric.silhouette?.join("\n- ") ?? ""}
+- ${sil.join("\n- ")}
 `.trim();
 }
 
@@ -59,10 +66,7 @@ export default function RatingPage() {
     ((params as any)?.styleId as string) ||
     "";
 
-  const style = useMemo(
-    () => styleCategories.find((s) => s.id === styleId),
-    [styleId]
-  );
+  const style = useMemo(() => styleCategories.find((s) => s.id === styleId), [styleId]);
 
   // ✅ tech-bro -> tech_bro to match rubric keys
   const rubricKey = useMemo(() => {
@@ -71,7 +75,7 @@ export default function RatingPage() {
   }, [styleId]);
 
   const rubric = useMemo(() => {
-    return (styleRubrics as any)[rubricKey];
+    return (styleRubrics as any)[rubricKey] ?? null;
   }, [rubricKey]);
 
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
@@ -89,6 +93,10 @@ export default function RatingPage() {
   }, []);
 
   const handleRate = async () => {
+    // reset UI
+    setError(null);
+    setResult(null);
+
     if (!styleId) {
       setError("Missing target style.");
       return;
@@ -103,8 +111,6 @@ export default function RatingPage() {
     }
 
     setLoading(true);
-    setError(null);
-    setResult(null);
 
     try {
       const base64 = imageDataUrl.split(",")[1];
@@ -119,6 +125,8 @@ Schema:
   "detected_style": string,
   "match_score": number,
   "confidence": number,
+  "top_match": boolean,
+  "bottom_match": boolean,
   "reasons": string[],
   "suggestions": string[]
 }
@@ -138,6 +146,9 @@ Hard rules:
 - match_score: 0-100, confidence: 0-1.
 - Provide 3-6 bullet reasons and 3-6 bullet suggestions.
 - Suggestions must explicitly reference rubric items (e.g., replace X with a rubric signature item).
+- Set top_match true only if the TOP clearly matches the rubric.
+- Set bottom_match true only if the BOTTOM clearly matches the rubric.
+- If top or bottom is not visible / unclear, set that part's match to false.
 
 Now analyze the image and output JSON only.
 `.trim();
@@ -148,12 +159,22 @@ Now analyze the image and output JSON only.
 
       const json = extractJson(text) as RatingResult;
 
-      // ✅ guard so UI never breaks
-      json.target_style = styleId;
-      if (!Array.isArray(json.reasons)) json.reasons = [];
-      if (!Array.isArray(json.suggestions)) json.suggestions = [];
+      // ✅ guards so UI never breaks
+      const safe: RatingResult = {
+        target_style: styleId,
+        detected_style: typeof json?.detected_style === "string" ? json.detected_style : "Unknown",
+        match_score: typeof json?.match_score === "number" ? json.match_score : 0,
+        confidence: typeof json?.confidence === "number" ? json.confidence : 0,
+        reasons: Array.isArray(json?.reasons) ? json.reasons : [],
+        suggestions: Array.isArray(json?.suggestions) ? json.suggestions : [],
+        top_match: typeof json?.top_match === "boolean" ? json.top_match : false,
+        bottom_match: typeof json?.bottom_match === "boolean" ? json.bottom_match : false,
+      };
 
-      setResult(json);
+      // ✅ store for suggestions page (tops vs bottoms logic)
+      sessionStorage.setItem("fitcheck:rating", JSON.stringify(safe));
+
+      setResult(safe);
     } catch (e: any) {
       setError(e?.message ?? "Rating failed.");
     } finally {
@@ -166,14 +187,9 @@ Now analyze the image and output JSON only.
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold">Outfit Rating</h1>
-          <p className="text-sm text-muted-foreground">
-            Target: {style?.name ?? styleId}
-          </p>
-          {/* keep for debugging; remove later */}
-          <p className="text-xs text-muted-foreground">
-            Rubric key: {rubricKey || "(none)"}
-          </p>
+          <p className="text-sm text-muted-foreground">Target: {style?.name ?? styleId}</p>
         </div>
+
         <Button variant="outline" onClick={() => router.push(`/camera/${styleId}`)}>
           Retake
         </Button>
@@ -196,12 +212,13 @@ Now analyze the image and output JSON only.
       ) : (
         <div className="space-y-3">
           <div className="rounded-xl border border-white/10 p-4">
-            <div className="text-4xl font-bold">{result.match_score}/100</div>
-            <div className="text-sm text-muted-foreground">
-              Confidence: {Math.round(result.confidence * 100)}%
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Detected: {result.detected_style}
+    
+            <div className="text-sm text-muted-foreground">Detected: {result.detected_style}</div>
+
+            {/* optional tiny debug */}
+            <div className="text-xs text-muted-foreground mt-2">
+              Top match: {result.top_match ? "yes" : "no"} • Bottom match:{" "}
+              {result.bottom_match ? "yes" : "no"}
             </div>
           </div>
 
