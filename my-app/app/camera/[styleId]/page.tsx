@@ -1,5 +1,11 @@
+"use client";
+
+import { useParams } from "next/navigation";
 import { CameraView } from "@/components/CameraView";
 
 export default function CameraPage() {
-  return <CameraView />;
+  const params = useParams();
+  const styleId = params?.styleId as string;
+
+  return <CameraView styleId={styleId} />;
 }
