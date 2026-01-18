@@ -82,7 +82,7 @@ export function CameraView({ styleId }: { styleId: string }) {
     // clear any previous timer
     if (countdownRef.current) window.clearInterval(countdownRef.current);
 
-    setCountdown(3);
+    setCountdown(5);
 
     countdownRef.current = window.setInterval(() => {
       setCountdown((prev) => {

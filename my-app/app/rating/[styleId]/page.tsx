@@ -191,7 +191,7 @@ Now analyze the image and output JSON only.
         </div>
 
         <Button variant="outline" onClick={() => router.push(`/camera/${styleId}`)}>
-          Retake
+          Back
         </Button>
       </div>
 
