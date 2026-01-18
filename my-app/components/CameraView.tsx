@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Camera, RotateCcw, X, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,10 @@ export function CameraView({ styleId }: { styleId: string }) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
+
+  // ✅ NEW: countdown timer
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownRef = useRef<number | null>(null);
 
   const style = styleCategories.find((s) => s.id === styleId);
   const styleName =
@@ -48,11 +52,12 @@ export function CameraView({ styleId }: { styleId: string }) {
     startCamera();
     return () => {
       if (stream) stream.getTracks().forEach((t) => t.stop());
+      if (countdownRef.current) window.clearInterval(countdownRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facingMode]);
 
-  const capturePhoto = () => {
+  const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -67,11 +72,49 @@ export function CameraView({ styleId }: { styleId: string }) {
     ctx.drawImage(video, 0, 0);
     const imageData = canvas.toDataURL("image/jpeg", 0.9);
     setPhoto(imageData);
+  }, []);
+
+  // ✅ NEW: start a 3..2..1 countdown, then auto-capture
+  const startCountdownCapture = () => {
+    if (isLoading || photo) return;
+    if (countdown !== null) return;
+
+    // clear any previous timer
+    if (countdownRef.current) window.clearInterval(countdownRef.current);
+
+    setCountdown(3);
+
+    countdownRef.current = window.setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null) return null;
+
+        if (prev <= 1) {
+          window.clearInterval(countdownRef.current!);
+          countdownRef.current = null;
+
+          // brief beat so "1" is visible before capturing
+          setTimeout(() => {
+            setCountdown(null);
+            capturePhoto();
+          }, 150);
+
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
   };
 
-  const retakePhoto = () => setPhoto(null);
+  const retakePhoto = () => {
+    setPhoto(null);
+    setCountdown(null);
+    if (countdownRef.current) window.clearInterval(countdownRef.current);
+    countdownRef.current = null;
+  };
 
   const toggleCamera = () => {
+    if (countdown !== null) return; // don't flip mid-countdown
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };
 
@@ -94,7 +137,13 @@ export function CameraView({ styleId }: { styleId: string }) {
         className="absolute top-0 left-0 right-0 z-10 glass-panel"
       >
         <div className="p-4 flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/")} className="rounded-full">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/")}
+            className="rounded-full"
+            disabled={countdown !== null}
+          >
             <X className="w-5 h-5" />
           </Button>
 
@@ -108,7 +157,7 @@ export function CameraView({ styleId }: { styleId: string }) {
             size="icon"
             onClick={toggleCamera}
             className="rounded-full"
-            disabled={!!photo}
+            disabled={!!photo || countdown !== null}
           >
             <RotateCcw className="w-5 h-5" />
           </Button>
@@ -149,6 +198,29 @@ export function CameraView({ styleId }: { styleId: string }) {
           </div>
         )}
 
+        {/* ✅ NEW: countdown overlay */}
+        <AnimatePresence>
+          {countdown !== null && !photo && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <div className="rounded-full bg-black/60 px-10 py-6 border border-white/10">
+                <motion.div
+                  key={countdown}
+                  initial={{ scale: 0.75, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="text-6xl font-bold text-white text-center"
+                >
+                  {countdown === 0 ? "📸" : countdown}
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
@@ -173,8 +245,8 @@ export function CameraView({ styleId }: { styleId: string }) {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={capturePhoto}
-            disabled={isLoading}
+            onClick={startCountdownCapture} // ✅ changed
+            disabled={isLoading || countdown !== null} // ✅ changed
             className="w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-lg disabled:opacity-50"
           >
             <div className="w-16 h-16 rounded-full border-4 border-primary-foreground flex items-center justify-center">
