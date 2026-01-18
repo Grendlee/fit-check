@@ -16,7 +16,6 @@ export default function AccountMenu() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Load user + keep in sync when auth changes
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase.auth.getUser();
@@ -24,7 +23,7 @@ export default function AccountMenu() {
     };
     load();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser({ email: session?.user?.email ?? null });
     });
 
@@ -33,7 +32,6 @@ export default function AccountMenu() {
     };
   }, [supabase]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (!menuRef.current) return;
@@ -49,37 +47,75 @@ export default function AccountMenu() {
     router.replace("/auth/login");
   };
 
-  // ✅ Hide entirely if not logged in
   if (!user?.email) return null;
 
-  const label = user.email.length > 22 ? `${user.email.slice(0, 22)}…` : user.email;
+  const label =
+    user.email.length > 24 ? `${user.email.slice(0, 24)}…` : user.email;
 
   return (
     <div ref={menuRef} className="relative">
+      {/* Trigger */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-white hover:bg-white/10"
+        className="
+          flex items-center gap-2
+          rounded-full
+          border border-zinc-900
+          bg-[#f4eadf]
+          px-4 py-2
+          text-sm
+          shadow-[2px_2px_0_#00000012]
+          hover:bg-[#eee2d5]
+          transition
+        "
       >
-        <span className="h-2 w-2 rounded-full bg-green-400" />
-        <span className="max-w-[180px] truncate">{label}</span>
-        <span className="text-white/70">▾</span>
+        <span className="h-2 w-2 rounded-full bg-zinc-900" />
+        <span className="max-w-[180px] truncate [font-family:ui-serif,Georgia,serif]">
+          {label}
+        </span>
+        <span className="text-zinc-700">▾</span>
       </button>
 
+      {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-lg">
+        <div
+          className="
+            absolute right-0 mt-2 w-52
+            overflow-hidden
+            rounded-2xl
+            border border-zinc-900
+            bg-[#f4eadf]
+            shadow-[4px_4px_0_#00000015]
+          "
+        >
           <button
             onClick={() => {
               setOpen(false);
-              router.push("/account"); // optional route you can create later
+              router.push("/account");
             }}
-            className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10"
+            className="
+              w-full px-4 py-3
+              text-left text-sm
+              hover:bg-[#eee2d5]
+              transition
+              [font-family:ui-serif,Georgia,serif]
+            "
           >
             Account
           </button>
 
+          <div className="h-px bg-zinc-900/20" />
+
           <button
             onClick={handleSignOut}
-            className="w-full px-4 py-3 text-left text-sm text-red-300 hover:bg-white/10"
+            className="
+              w-full px-4 py-3
+              text-left text-sm
+              text-zinc-700
+              hover:bg-[#eee2d5]
+              transition
+              [font-family:ui-serif,Georgia,serif]
+            "
           >
             Sign out
           </button>
