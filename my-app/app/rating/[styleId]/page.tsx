@@ -180,42 +180,31 @@ Now analyze the image and output JSON only.
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 max-w-md mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-xl font-bold">Outfit Rating</h1>
-          <p className="text-sm text-muted-foreground">Target: {style?.name ?? styleId}</p>
-        </div>
+    <div className="min-h-screen bg-[#f4eadf] text-zinc-900">
+      {/* subtle paper dots */}
+      <div className="pointer-events-none fixed inset-0 opacity-[0.12] bg-[radial-gradient(#000_0.8px,transparent_0)] [background-size:22px_22px]" />
 
-        <Button variant="outline" onClick={() => router.push(`/camera/${styleId}`)}>
-          Back
-        </Button>
-      </div>
-
-      {imageDataUrl && (
-        <img
-          src={imageDataUrl}
-          alt="Captured"
-          className="w-full rounded-xl border border-white/10 mb-4"
-        />
-      )}
-
-      {error && <div className="text-sm text-red-500 mb-3">{error}</div>}
-
-      {!result ? (
-        <Button className="w-full" onClick={handleRate} disabled={loading || !imageDataUrl}>
-          {loading ? "Rating..." : "Rate my fit"}
-        </Button>
-      ) : (
-        <div className="space-y-3">
-          <div className="rounded-xl border border-white/10 p-4">
-    
-            <div className="text-sm text-muted-foreground">Detected: {result.detected_style}</div>
-
-            {/* optional tiny debug */}
-            <div className="text-xs text-muted-foreground mt-2">
-              Top match: {result.top_match ? "yes" : "no"} • Bottom match:{" "}
-              {result.bottom_match ? "yes" : "no"}
+      <div className="relative mx-auto w-full max-w-6xl px-6 py-6">
+        {/* Step Indicator */}
+        <section className="relative px-6 pb-8">
+            <div className="mx-auto w-full max-w-6xl rounded-[26px] border-2 border-zinc-900 bg-[#f4eadf] p-4 shadow-[5px_5px_0_#00000012]">
+            <StepIndicator currentStep={2} />
+            </div>
+        </section>
+        {/* Top bar */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[10px] tracking-[0.28em] uppercase text-zinc-700">
+              Outfit rating
+            </div>
+            <h1 className="mt-1 text-3xl sm:text-4xl leading-[0.95] tracking-[-0.02em] [font-family:'Bodoni Moda','Didot','Bodoni MT',ui-serif,serif] font-semibold">
+              Result
+            </h1>
+            <div className="mt-2 text-sm text-zinc-700">
+              Target vibe:{" "}
+              <span className="text-zinc-900 font-medium">
+                {style?.name ?? styleId}
+              </span>
             </div>
           </div>
 
@@ -224,7 +213,7 @@ Now analyze the image and output JSON only.
             onClick={() => router.push(`/camera/${styleId}`)}
             className="h-11 rounded-full px-6 border-2 border-zinc-900 bg-[#f7f1ea] text-zinc-900 hover:bg-[#eee2d5] shadow-[2px_2px_0_#00000012]"
           >
-            Retake
+            Back
           </Button>
         </div>
         
