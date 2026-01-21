@@ -27,3 +27,6 @@ next.js
 python
 supabase
 typescript
+
+# Devpost:
+https://devpost.com/software/fitcheck-6rnqz7
